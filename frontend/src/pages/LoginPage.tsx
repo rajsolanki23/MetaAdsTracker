@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ui/Toast';
-import { Trophy, Shield, Lock, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Trophy, Shield, Lock, Mail, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export const LoginPage: React.FC = () => {
@@ -10,6 +10,7 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingSeconds, setSubmittingSeconds] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
   const { login, isAuthenticated } = useAuth();
@@ -19,11 +20,24 @@ export const LoginPage: React.FC = () => {
 
   const from = (location.state as any)?.from?.pathname || '/';
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, from]);
+
+  useEffect(() => {
+    let timer: any;
+    if (isSubmitting) {
+      setSubmittingSeconds(0);
+      timer = setInterval(() => {
+        setSubmittingSeconds((s) => s + 1);
+      }, 1000);
+    } else {
+      setSubmittingSeconds(0);
+    }
+    return () => clearInterval(timer);
+  }, [isSubmitting]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +89,17 @@ export const LoginPage: React.FC = () => {
               <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono flex items-center gap-2">
                 <Lock className="w-4 h-4 shrink-0" />
                 <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {isSubmitting && submittingSeconds >= 3 && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono flex items-center gap-2 animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                <span>
+                  {submittingSeconds < 12
+                    ? 'Connecting to secure terminal...'
+                    : 'Waking up free cloud instance (~15-20s on first request)...'}
+                </span>
               </div>
             )}
 

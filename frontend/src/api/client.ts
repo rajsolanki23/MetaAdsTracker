@@ -30,11 +30,17 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
     ...((options.headers as Record<string, string>) || {}),
   };
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for free tier cloud wake-ups
+
   try {
     const response = await fetch(url, {
       ...options,
       headers,
+      signal: options.signal || controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       if (response.status === 401 && !endpoint.includes('/auth/login')) {
@@ -59,9 +65,14 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
 
     return await response.json();
   } catch (error: any) {
-    // Format connection failure clearly
+    clearTimeout(timeoutId);
+
+    if (error.name === 'AbortError') {
+      throw new Error(`Request timed out while connecting to ${API_BASE}. Free server may still be waking up. Please retry.`);
+    }
+
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error(`Unable to connect to backend API server at ${API_BASE}. Please ensure the server is running.`);
+      throw new Error(`Unable to connect to backend server at ${API_BASE}. Please ensure the server is running or awake.`);
     }
     throw error;
   }

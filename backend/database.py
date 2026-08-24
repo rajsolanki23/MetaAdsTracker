@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import copy
 from typing import Dict, List, Any, Optional
@@ -152,16 +153,26 @@ db_manager = DatabaseManager()
 
 
 async def connect_to_mongo():
-    logger.info(f"Connecting to database at {settings.MONGODB_URI}...")
+    uri = settings.MONGODB_URI.strip()
+    
+    # In cloud production, skip localhost to prevent blocking socket timeouts
+    if settings.ENVIRONMENT == "production" and ("localhost" in uri or "127.0.0.1" in uri):
+        logger.info("[PROD READY] Localhost MongoDB skipped in cloud production environment. Using in-memory store.")
+        db_manager.is_live_mongo = False
+        db_manager.db = in_memory_db
+        return
+
+    logger.info(f"Connecting to database at {uri}...")
     try:
-        db_manager.client = AsyncIOMotorClient(
-            settings.MONGODB_URI,
-            serverSelectionTimeoutMS=1000,
-            connectTimeoutMS=1000,
+        motor_client = AsyncIOMotorClient(
+            uri,
+            serverSelectionTimeoutMS=1500,
+            connectTimeoutMS=1500,
         )
-        # Attempt ping
-        await db_manager.client.admin.command('ping')
-        db_manager.db = db_manager.client[settings.DATABASE_NAME]
+        # Attempt non-blocking ping with 1.5s timeout
+        await asyncio.wait_for(motor_client.admin.command('ping'), timeout=1.5)
+        db_manager.client = motor_client
+        db_manager.db = motor_client[settings.DATABASE_NAME]
         db_manager.is_live_mongo = True
         logger.info(f"[OK] Connected to live MongoDB: {settings.DATABASE_NAME}")
         await init_indices()
