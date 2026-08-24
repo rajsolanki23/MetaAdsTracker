@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Client } from '../../types';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useTriggerClientSync, useTestMetaConnection, useUpdateClient } from '../../api/queries';
 import { useToast } from '../ui/Toast';
-import { RefreshCw, Shield, Clock } from 'lucide-react';
+import { RefreshCw, Shield, Clock, Plus } from 'lucide-react';
 
 interface MetaSyncSettingsProps {
   clients: Client[];
 }
 
 export const MetaSyncSettings: React.FC<MetaSyncSettingsProps> = ({ clients }) => {
+  const navigate = useNavigate();
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?._id || '');
   const selectedClient = clients.find((c) => c._id === selectedClientId) || clients[0];
 
@@ -23,6 +25,12 @@ export const MetaSyncSettings: React.FC<MetaSyncSettingsProps> = ({ clients }) =
       setAccessToken(selectedClient.access_token || '');
     }
   }, [selectedClient]);
+
+  React.useEffect(() => {
+    if (!selectedClientId && clients.length > 0) {
+      setSelectedClientId(clients[0]._id);
+    }
+  }, [clients, selectedClientId]);
 
   const triggerSync = useTriggerClientSync();
   const testConnection = useTestMetaConnection();
@@ -71,6 +79,27 @@ export const MetaSyncSettings: React.FC<MetaSyncSettingsProps> = ({ clients }) =
       showToast(err.message || 'Sync failed', 'error');
     }
   };
+
+  if (clients.length === 0) {
+    return (
+      <div className="bg-[#0f172a]/95 border border-dashed border-slate-800 rounded-2xl p-8 text-center backdrop-blur-md">
+        <Shield className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+        <h3 className="text-base font-bold text-slate-200">No Client Accounts Connected</h3>
+        <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+          Add your first client account to connect Meta Ad Account IDs and automate 4-hour background syncs.
+        </p>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => navigate('/clients')}
+          className="mt-4 text-xs font-mono"
+        >
+          <Plus className="w-3.5 h-3.5 mr-1" />
+          <span>Add Client Account</span>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

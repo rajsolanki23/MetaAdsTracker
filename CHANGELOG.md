@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 2026-08-24 (Update 3: Production Fresh State - Zero Demo Data)
+
+### Changed
+- **Database Initializer (`backend/database.py`)**: Removed automatic demo seeding on startup so deployed environments launch in a clean, production-ready state with 0 mock clients, 0 mock creatives, and 0 mock snapshots.
+- **Frontend Empty States**:
+  - `MetaSyncSettings.tsx`: Polished onboarding banner with a 1-click button to connect the first client account when 0 clients exist.
+  - `PodiumTop3.tsx`: Graceful hiding when 0 creatives exist.
+  - `ClientCardsGrid.tsx` & `LeaderboardTable.tsx`: Clean empty state messages for fresh account onboarding.
+
+---
+
 ## 2026-08-24 (Update 2: Operator Security & Authentication)
 
 ### Added
