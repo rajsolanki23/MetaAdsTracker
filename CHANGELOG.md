@@ -1,6 +1,32 @@
 # CHANGELOG
 
-## 2026-08-24
+## 2026-08-24 (Update 2: Operator Security & Authentication)
+
+### Added
+- **Single-Operator Authentication Module**: Secure Email + Password Sign In dashboard guarding all internal screens and API endpoints.
+- **Backend Auth Service (`backend/services/auth_service.py`)**:
+  - Salted PBKDF2-HMAC-SHA256 password hashing (100,000 iterations).
+  - Cryptographically signed JWT access token issuance and signature verification (`pyjwt`).
+  - `get_current_admin` FastAPI security dependency guarding all operational routers.
+  - Password hashing CLI helper `backend/scripts/hash_password.py`.
+- **Backend Auth Router (`backend/routers/auth.py`)**:
+  - `POST /api/auth/login`: Authenticates email and password, returning JWT bearer token.
+  - `GET /api/auth/me`: Validates operator session.
+- **Frontend Authentication Architecture**:
+  - `AuthContext` & `AuthProvider` (`frontend/src/context/AuthContext.tsx`) for global token and session state persistence.
+  - `ProtectedRoute` guard (`frontend/src/components/auth/ProtectedRoute.tsx`) redirecting unauthenticated visitors to `/login`.
+  - Gaming dark-theme `LoginPage` (`frontend/src/pages/LoginPage.tsx`) with brand banner, password visibility toggle, and error states.
+  - `Navbar` update with operator profile badge and 1-click Sign Out button.
+  - Automatic `Authorization: Bearer <token>` header attachment and 401 interceptor in `frontend/src/api/client.ts`.
+- **Test Suite**: 5 new authentication unit and endpoint tests in `backend/tests/test_auth.py` (17/17 pytest tests passing).
+
+### Changed
+- Protected `/api/clients`, `/api/creatives`, `/api/leaderboard`, `/api/meta`, and `/api/import` with `Depends(get_current_admin)`.
+- Maintained public health access for `/api/health` and keep-alive ping for `/api/sync/cron` (protected by `X-Cron-Secret`).
+
+---
+
+## 2026-08-24 (Initial Release)
 
 ### Added
 - **Creative Leaderboard Application**: Full-stack, 100% open-source web application for performance marketing operators on a $0/month stack (React + TypeScript + Vite + FastAPI + Motor MongoDB + Vercel + Render + MongoDB Atlas).
@@ -19,27 +45,3 @@
 - **Manual CRUD**: Add and edit creative entries, notes, tags, and status overrides independent of Meta sync.
 - **Demo Seed Generator**: Rich seed script (`python -m backend.scripts.seed_demo`) generating 3 realistic clients, 13 ad creatives with high-res thumbnails, and 30 days of immutable snapshots.
 - **Deployment Configs**: `render.yaml` for Render free tier web service and `frontend/vercel.json` for Vercel SPA routing.
-
-### Impacted Modules
-- `backend/` (FastAPI REST API, Motor DB, APScheduler, HTTPX Meta Client, Pytest suite)
-- `frontend/` (React 18 + TypeScript + Vite, Tailwind CSS, TanStack Query, Recharts, Lucide React)
-
-### APIs Changed / Added
-- `GET /api/health`
-- `GET /api/sync/cron`
-- `GET /api/leaderboard`
-- `GET /api/leaderboard/podium`
-- `GET /api/clients`, `POST /api/clients`, `GET /api/clients/{id}`, `PUT /api/clients/{id}`, `DELETE /api/clients/{id}`
-- `GET /api/creatives/{id}`, `POST /api/creatives`, `PUT /api/creatives/{id}`, `GET /api/creatives/{id}/snapshots`, `GET /api/creatives/{id}/trend`
-- `POST /api/meta/test-connection`, `POST /api/meta/sync/{client_id}`, `POST /api/meta/sync-all`, `GET /api/meta/logs`
-- `POST /api/import/preview`, `POST /api/import/bulk-paste`
-
-### Migration Requirements
-- None (Initial setup).
-
-### Breaking Changes
-- None.
-
-### Notes
-- All 12 automated unit/integration tests in Pytest pass cleanly.
-- Frontend builds cleanly in `frontend/dist/` without errors.

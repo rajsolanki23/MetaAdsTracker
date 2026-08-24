@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from backend.main import app
+from backend.services.auth_service import create_access_token
 
 
 @pytest.mark.asyncio
@@ -28,12 +29,15 @@ async def test_root_endpoint():
 @pytest.mark.asyncio
 async def test_import_preview_endpoint():
     transport = ASGITransport(app=app)
+    token = create_access_token({"sub": "rajsolanki32@gmail.com", "role": "admin"})
+    headers = {"Authorization": f"Bearer {token}"}
+    
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         payload = {
             "client_id": "mock_client_1",
             "raw_text": "Ad Name,Spend,Purchase ROAS,Purchases\nCreative Hero,$400.00,3.2,12"
         }
-        response = await ac.post("/api/import/preview", json=payload)
+        response = await ac.post("/api/import/preview", json=payload, headers=headers)
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is True

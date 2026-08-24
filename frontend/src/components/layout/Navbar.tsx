@@ -1,7 +1,8 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Trophy, LayoutGrid, RefreshCw, Settings, Upload, Flame, ChevronDown } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Trophy, LayoutGrid, RefreshCw, Settings, Upload, Flame, ChevronDown, LogOut, Shield } from 'lucide-react';
 import { useClients, useTriggerAllSync } from '../../api/queries';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../ui/Toast';
 import { Button } from '../ui/Button';
 
@@ -18,6 +19,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { data: clients = [] } = useClients();
   const triggerAllSync = useTriggerAllSync();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const handleSyncAll = async () => {
@@ -28,6 +31,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     } catch (err: any) {
       showToast(err.message || 'Sync failed', 'error');
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    showToast('Signed out successfully', 'info');
+    navigate('/login');
   };
 
   const navLinks = [
@@ -81,14 +90,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
         </div>
 
-        {/* Right: Client Filter & Action Buttons */}
+        {/* Right: Client Filter, Sync, and Operator Profile / Logout */}
         <div className="flex items-center gap-3">
           {onSelectClient && (
-            <div className="relative min-w-[170px]">
+            <div className="relative min-w-[160px] hidden sm:block">
               <select
                 value={selectedClientId || ''}
                 onChange={(e) => onSelectClient(e.target.value)}
-                className="w-full pl-3 pr-8 py-1.5 bg-slate-900 border border-slate-700/80 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer"
+                className="w-full pl-3 pr-8 py-1.5 bg-slate-900 border border-slate-700/80 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer font-mono"
               >
                 <option value="">All Client Accounts</option>
                 {clients.map((c) => (
@@ -106,7 +115,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               variant="outline"
               size="sm"
               onClick={onOpenBulkImport}
-              className="border-slate-700 hover:border-slate-600 text-xs"
+              className="border-slate-700 hover:border-slate-600 text-xs hidden lg:inline-flex"
             >
               <Upload className="w-3.5 h-3.5 mr-1" />
               <span>Bulk Paste</span>
@@ -123,6 +132,28 @@ export const Navbar: React.FC<NavbarProps> = ({
             <RefreshCw className="w-3.5 h-3.5 mr-1" />
             <span>Sync All</span>
           </Button>
+
+          {/* Operator Profile & Logout */}
+          {user && (
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+              <div className="hidden xl:flex flex-col items-end">
+                <span className="text-[11px] font-mono font-bold text-slate-200 truncate max-w-[160px]">
+                  {user.email}
+                </span>
+                <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                  <Shield className="w-2.5 h-2.5" /> Authenticated
+                </span>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

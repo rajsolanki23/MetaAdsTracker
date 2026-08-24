@@ -1,5 +1,23 @@
 export type StatusType = 'WIN' | 'LOSS' | 'TESTING' | 'PAUSED';
 
+export interface AuthUser {
+  sub: string;
+  email: string;
+  role: string;
+  name: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in_minutes: number;
+  user: {
+    sub: string;
+    role: string;
+    name: string;
+  };
+}
+
 export interface Client {
   _id: string;
   name: string;

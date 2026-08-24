@@ -1,13 +1,15 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import settings
 from backend.database import connect_to_mongo, close_mongo_connection
 from backend.services.scheduler import start_scheduler, shutdown_scheduler
+from backend.services.auth_service import get_current_admin
 
 from backend.routers.health import router as health_router
+from backend.routers.auth import router as auth_router
 from backend.routers.clients import router as clients_router
 from backend.routers.leaderboard import router as leaderboard_router
 from backend.routers.creatives import router as creatives_router
@@ -37,13 +39,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="High-performance Meta Ad Creative Leaderboard & Sync REST API",
+    description="High-performance Meta Ad Creative Leaderboard & Sync REST API with Single-Operator Security",
     version="1.0.0",
     lifespan=lifespan
 )
 
 # Configure CORS
-origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+origins = settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins if origins else ["*"],
@@ -52,13 +54,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Routers
+# Public Endpoints
 app.include_router(health_router)
-app.include_router(clients_router)
-app.include_router(leaderboard_router)
-app.include_router(creatives_router)
-app.include_router(meta_sync_router)
-app.include_router(import_router)
+app.include_router(auth_router, prefix="/api")
+
+# Protected Dashboard Endpoints (Require valid JWT Bearer token)
+app.include_router(clients_router, dependencies=[Depends(get_current_admin)])
+app.include_router(leaderboard_router, dependencies=[Depends(get_current_admin)])
+app.include_router(creatives_router, dependencies=[Depends(get_current_admin)])
+app.include_router(meta_sync_router, dependencies=[Depends(get_current_admin)])
+app.include_router(import_router, dependencies=[Depends(get_current_admin)])
 
 
 @app.get("/")
@@ -66,7 +71,8 @@ async def root():
     return {
         "message": "Creative Leaderboard API is active.",
         "docs": "/docs",
-        "health": "/api/health"
+        "health": "/api/health",
+        "auth": "/api/auth/login"
     }
 
 

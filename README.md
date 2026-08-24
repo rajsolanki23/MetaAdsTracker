@@ -10,10 +10,20 @@
 | Layer | Technology | Hosting / Service | Cost |
 | :--- | :--- | :--- | :--- |
 | **Frontend** | React 18, TypeScript, Vite, Tailwind, Recharts | **Vercel** (Hobby Free Tier) | **$0** |
-| **Backend** | FastAPI, Python 3.10+, Motor, APScheduler, HTTPX | **Render** (Web Service Free Tier) | **$0** |
+| **Backend** | FastAPI, Python 3.10+, Motor, APScheduler, PyJWT, HTTPX | **Render** (Web Service Free Tier) | **$0** |
 | **Database** | MongoDB (Async Motor driver) | **MongoDB Atlas** (M0 Free 512MB) | **$0** |
 | **Meta API** | Marketing Graph API v18.0 | Meta for Developers | **$0** |
 | **Total** | | | **$0/month** |
+
+---
+
+## 🔒 Security & Single-Operator Authentication
+
+- **🛡️ Private Operator Terminal**: No public signups. The dashboard is protected by an email & password login gate.
+- **🔑 Salted PBKDF2 Password Hashing**: Passwords are never stored in plaintext (100,000 iterations PBKDF2-HMAC-SHA256 with random salt).
+- **🎟️ JWT Bearer Tokens**: Authenticated sessions use signed JSON Web Tokens (HMAC-SHA256).
+- **🧱 Protected API Layer**: All sensitive REST endpoints (`/api/leaderboard`, `/api/clients`, `/api/creatives`, `/api/meta`, `/api/import`) require valid JWT tokens.
+- **⚡ Keep-Alive Cron Security**: Background sync cron endpoints remain secured via the `X-Cron-Secret` header.
 
 ---
 
@@ -44,7 +54,7 @@
 # 1. Install dependencies
 pip install -r backend/requirements.txt
 
-# 2. (Optional) Run tests
+# 2. Run test suite
 pytest backend/tests/ -v
 
 # 3. (Optional) Seed realistic demo data
@@ -65,7 +75,7 @@ npm install
 npm run dev
 ```
 
-Visit **http://localhost:5173** to view the live dashboard!
+Visit **http://localhost:5173** to sign in to your operator terminal!
 
 ---
 
@@ -88,13 +98,17 @@ Visit **http://localhost:5173** to view the live dashboard!
    - **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
    - **Plan**: `Free`
 4. Add Environment Variables:
-   - `MONGODB_URI`: Your MongoDB Atlas connection string.
+   - `ENVIRONMENT`: `production`
+   - `DEBUG`: `false`
+   - `MONGODB_URI`: *Your MongoDB Atlas connection string*
    - `DATABASE_NAME`: `creative_leaderboard`
-   - `CORS_ORIGINS`: `https://your-frontend.vercel.app,http://localhost:5173`
-   - `CRON_SECRET`: Random secure string (e.g. `leaderboard-cron-key-123`)
+   - `CORS_ORIGINS`: `https://*.vercel.app,http://localhost:5173`
+   - `JWT_SECRET_KEY`: *Random 32-character secret string*
+   - `ADMIN_EMAIL`: `rajsolanki32@gmail.com`
+   - `ADMIN_PASSWORD_HASH`: `pbkdf2_sha256$100000$15f918365567d0f5ba54a7f033b30780$b878fe118a08ec3aa275d1ea9c5a89d31ba16c84af9e08d98b16d2e0a3c0314c`
+   - `CRON_SECRET`: `leaderboard-cron-key-2026`
+   - `SYNC_INTERVAL_HOURS`: `4`
 5. Deploy! Note your Render service URL (e.g. `https://creative-leaderboard.onrender.com`).
-
-> **Tip for Render Sleep Prevention**: Free web services sleep after 15 min of inactivity. Use [Cron-Job.org](https://cron-job.org) (100% free) to ping `https://creative-leaderboard.onrender.com/api/sync/cron` every 10–15 minutes with header `X-Cron-Secret: leaderboard-cron-key-123`. This keeps the service awake and triggers exact periodic syncs!
 
 ### 3. Frontend: Vercel Free Hobby Tier ($0)
 1. Sign in to [Vercel](https://vercel.com) and click **Add New > Project**.
@@ -112,7 +126,7 @@ Visit **http://localhost:5173** to view the live dashboard!
 
 ## 🧪 Testing
 
-Run backend unit and integration test suite:
+Run backend unit and integration test suite (including auth):
 
 ```bash
 python -m pytest backend/tests/ -v

@@ -19,6 +19,12 @@ services:
         value: creative_leaderboard
       - key: CORS_ORIGINS
         value: "https://*.vercel.app,http://localhost:5173"
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: rajsolanki32@gmail.com
+      - key: ADMIN_PASSWORD_HASH
+        value: "pbkdf2_sha256$100000$15f918365567d0f5ba54a7f033b30780$b878fe118a08ec3aa275d1ea9c5a89d31ba16c84af9e08d98b16d2e0a3c0314c"
       - key: CRON_SECRET
         generateValue: true
       - key: SYNC_INTERVAL_HOURS

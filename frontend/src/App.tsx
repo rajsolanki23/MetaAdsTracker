@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from './components/ui/Toast';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { LoginPage } from './pages/LoginPage';
 import { Navbar } from './components/layout/Navbar';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ClientsPage } from './pages/ClientsPage';
@@ -21,7 +24,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const AppContent: React.FC = () => {
+const DashboardLayout: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: clients = [] } = useClients();
 
@@ -75,9 +78,21 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>
   );
