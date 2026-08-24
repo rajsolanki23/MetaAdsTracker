@@ -41,7 +41,7 @@ export const LoginPage: React.FC = () => {
       navigate(from, { replace: true });
     } catch (err: any) {
       setErrorMessage(err.message || 'Invalid credentials. Access denied.');
-      showToast('Authentication failed', 'error');
+      showToast(err.message || 'Authentication failed', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -88,7 +88,7 @@ export const LoginPage: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="rajsolanki32@gmail.com"
+                  placeholder="operator@domain.com"
                   required
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-amber-400 transition-colors font-mono"
                 />
