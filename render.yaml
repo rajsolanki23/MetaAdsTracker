@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: creative-leaderboard-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: MONGODB_URI
+        sync: false # Set in Render Dashboard: mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net
+      - key: DATABASE_NAME
+        value: creative_leaderboard
+      - key: CORS_ORIGINS
+        value: "https://*.vercel.app,http://localhost:5173"
+      - key: CRON_SECRET
+        generateValue: true
+      - key: SYNC_INTERVAL_HOURS
+        value: "4"
